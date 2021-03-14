@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <!-- Add Vue js Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <title>Home!</title>
+  </head>
+  <body>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+    <br>
+    
+    <div class="container" id="assignment" style="z-index: 1;">
+      <div>      
+      <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="">Document Application</a>
+            <!-- <a class="navbar-brand" href="">Add Documents</a> -->
+          </div>
+        </div>
+      </nav>
+      </div>
+      
+      <!-- Search Documents by category -->
+      <div id="searchDoc" style="z-index: 1;">
+        <br>
+        <div class="jumbotron jumbotron-fluid">
+          <div class="container">
+          <h3 class="display-6 ">Search and Add Documents</h3>
+          </div>
+        </div>
+        <div class="form-inline">
+          <label class="my-1 mr-2" for="inlineFormCustomSelectPref">Select Categories  </label>
+          <select v-model="selectedCategory" class="form-control custom-select my-1 mr-sm-2" required>
+            <option value="">Get All the Documents</option>
+            <option v-for="(item, key) in categories" :value="item.id">
+              {{ item.name }}
+            </option>
+          </select>
+          <button class="btn btn-outline-primary my-1 mr-2" v-on:click="getDocuments(selectedCategory)">Submit</button>
+          <button class="btn btn-outline-secondary my-1 mr-2" data-toggle="modal" data-target="#addDoc">Add Document</button>
+        
+        </div>
+        <br>
+        <!-- display document result -->
+        <div>
+          <table class="table">
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Document Name</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Updated At</th>
+                <th scope="col">Update</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, key) in documentData" :key="item.id">
+                <td>{{ item.id }}</td>
+                <td> <input v-model="item.name" :id="item.id" style="width: 100%;" disabled> </td>
+                <td>{{ item.created_at }}</td>
+                <td>{{ item.updated_at }}</td>
+                <td>
+                  <button class="btn btn-primary" 
+                    v-on:click="editValueCall(item.id, selectedCategory, item.name)" :id="item.id" :value="editButtonVal" >
+                    <div v-if="editButtonVal === 'Edit' ">
+                      <i class="fas fa-edit"></i>
+                    </div>
+                    <div v-else-if="editButtonVal === 'Save' ">
+                      <i class="fas fa-save"></i>
+                    </div>
+                  </button>
+                  <button type="button" class="btn btn-danger" 
+                    v-on:click="deleteDoc(item.id, selectedCategory)">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              </tbody>
+          </table>
+
+        </div>
+        <div>{{ resultSetEmptyMsg }}</div>
+      </div>  
+
+      <div aria-live="polite" aria-atomic="true" style="position: relative; min-height: 100px; z-index: 2;">
+        <!-- Position it -->
+        <div style="position: absolute; top: 0; right: 0;">
+          <div class="toast" aria-live="polite" aria-atomic="true" >
+            <div class="toast-header">
+              <strong class="mr-auto">Message</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body">
+              {{ message }}
+            </div>
+          </div>
+        </div>
+      </div>    
+      <!-- Add Document Model -->
+      <div class="modal fade" id="addDoc" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Add Document</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form class="form">
+                <div class="form-group row">
+                  <label  class="col-sm-4 col-form-label">Select Categories</label>
+                  <div class="col-sm-8">
+                    <select v-model="selectedCategory" class="form-control custom-select my-1 mr-sm-2" required>
+                      <option v-for="(item, key) in categories" :value="item.id">
+                        {{ item.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label  class="col-sm-4 col-form-label">Document Name</label>
+                    <div class="col-sm-8">
+                      <input type="Document Name" v-model="docName" class="form-control" id="docName" required>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-outline-success" v-on:click="addDocument(selectedCategory,docName)" data-dismiss="modal"> 
+                Add Document
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+    </div>
+
+  <script>
+    new Vue({
+      el: '#assignment',
+      data: {
+        message: 'Hello',
+        categories: [],
+        selectedCategory: '',
+        documentData: [],
+        editButtonVal: 'Edit',
+        docName: '',
+        message: '',
+        errMessage: '',
+        resultSetEmptyMsg: ''
+      },
+      watch: {
+        
+      },
+      methods: {
+        EditDoc: function(id) {
+          if(this.editButtonVal == "Save"){
+            this.editButtonVal = "Edit";
+            document.getElementById(id).disabled = true;
+          } else if(this.editButtonVal = "Edit") {
+            this.editButtonVal = "Save";
+            document.getElementById(id).disabled = false;
+          }
+        },
+        fetchCatagories: function(){
+          fetch(`http://localhost/dummy/api/category/getall.php`, {
+              method: 'GET'
+            }).then(resp => {
+                if (!resp.ok) throw resp.text().then(err => err);
+                return resp.json();
+            }).then(result => {
+              this.categories = result.data;
+            })
+            .catch(errMessage => {
+                // alert("There is something wrong Wrong");
+                console.log("Error:"+errMessage);
+            })
+        },
+        getDocuments: function(selectedCategory){
+          console.log("Get Doc!!!")
+          this.selectedCategory = selectedCategory;
+          if(this.selectedCategory){
+            // console.log('Get Document for Cat!'+this.selectedCategory);
+            fetch(`http://localhost/dummy/api/document/get.php?id=${this.selectedCategory}`, {
+              method: 'GET'
+            }).then(resp => {
+                if (!resp.ok) throw resp.status;
+                return resp.json();
+            }).then(result => {
+              if(result.data){
+                this.resultSetEmptyMsg = "";
+                this.documentData = result.data;
+              }
+              else if(result.message){
+                this.message = result.message;
+                this.documentData = [];
+                this.resultSetEmptyMsg = "No Document Available!"
+                $('.toast').toast('show');
+              }
+            })
+            .catch(errMessage => {
+                // alert("There is something wrong Wrong");
+                console.log("Error:"+errMessage);
+            })
+          }
+          else {
+            fetch(`http://localhost/dummy/api/document/getall.php`, {
+              method: 'GET'
+            }).then(resp => {
+                if (!resp.ok) throw resp.text().then(err => err);
+                return resp.json();
+            }).then(result => {
+              if(result.data){
+                this.resultSetEmptyMsg = "";
+                this.documentData = result.data;
+              }
+              else if(result.message){
+                this.message = result.message;
+                this.documentData = [];
+                this.resultSetEmptyMsg = "No Document Available!"
+                $('.toast').toast('show');
+              }
+            })
+            .catch(errMessage => {
+                this.errMessage = "Plese select Document type."
+                console.log("Error:"+errMessage);
+            })
+          }
+        },
+        addDocument: function(selectedCategory,docName){
+          this.selectedCategory = selectedCategory;
+          this.docName = docName;
+          console.log("DocName="+this.docName);
+          console.log("selectedCategory="+this.selectedCategory);
+          var formData = new FormData();
+          formData.append('categoryId', this.selectedCategory);
+          formData.append('name', this.docName);
+          if(this.docName && this.selectedCategory){
+            fetch(`http://localhost/dummy/api/document/post.php`, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(resp => {
+                    if (resp.status === 201 ) {
+                      this.message = "Document Successfully Added.";
+                      $('.toast').toast('show');
+                    }
+                    else throw resp.status;
+                })
+                .then(() => {
+                  this.getDocuments(selectedCategory);
+                })
+                .catch(errMessage => {
+                    // alert("Error:"+errMessage);
+                    console.log("Error:"+errMessage);
+                })
+          }
+          else{
+            alert("Please enter Select Category or Enter Valid Document name");
+          }
+          
+        },
+        editValueCall: function(id,selectedCategory, newName){
+          this.EditDoc(id);
+          console.log("New Name="+newName);
+          console.log("Edit ID="+id);
+          this.newName =newName;
+          if(id && newName){
+            fetch(`http://localhost/dummy/api/document/put.php`, { 
+              method: 'PUT', 
+              body: JSON.stringify({
+                  id: id,
+                  category_id: selectedCategory,
+                  name: newName
+              }),
+              headers: { 
+                'Content-type': 'application/json'
+              },  
+            })
+            .then(resp => {
+              if (resp.status === 200 ) {
+                  this.message = "Document Successfully Updated.";
+                  $('.toast').toast('show');
+              }
+              else throw resp.status;
+            })
+            .catch(errMessage => {
+                    console.log("Error:"+errMessage);
+            }) 
+          }
+          this.getDocuments(selectedCategory);
+        },
+        deleteDoc: function(id,selectedCategory){
+          console.log("Document ID="+id);
+          var formData = new FormData();
+          formData.append('id', id);
+          if(id){
+            fetch(`http://localhost/dummy/api/document/delete.php?id=${id}`, {
+              method: 'DELETE'
+            })
+            .then(resp => {
+              if (resp.status === 200 ) {
+                  this.message = "Document Successfully Deleted.";
+                  $('.toast').toast('show');
+              }
+              else throw resp.status;
+            })
+            .catch(errMessage => {
+                    console.log("Error:"+errMessage);
+            })
+          }
+          this.getDocuments(selectedCategory);
+        }
+      },
+      
+      created() {
+        this.fetchCatagories();
+        console.log('Component has been created!');
+      }
+
+    })
+
+  </script>  
+  </body>
+</html>
